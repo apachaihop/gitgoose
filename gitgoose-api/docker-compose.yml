@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: gitgoose
+      POSTGRES_PASSWORD: gitgoose
+      POSTGRES_DB: gitgoose
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  gitgoose-nest:
+    build:
+      context: ./gitgoose-nest
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: gitgoose
+      DB_PASSWORD: gitgoose
+      DB_DATABASE: gitgoose
+      GIT_SERVICE_URL: http://gitgoose-nest-git:3001
+      NODE_ENV: production
+      JWT_SECRET: your-secret-key
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - gitgoose-nest-git
+
+  gitgoose-nest-git:
+    build:
+      context: ./gitgoose-nest-git
+      dockerfile: Dockerfile
+    environment:
+      NODE_ENV: production
+      STORAGE_PATH: /git-storage
+    volumes:
+      - git_storage:/git-storage
+    ports:
+      - "3001:3001"
+
+volumes:
+  postgres_data:
+  git_storage:
