@@ -1,9 +1,12 @@
+import { GqlAuthGuard } from './../auth/gql_auth/gql_auth.guard';
 import { Resolver, Query, Mutation, Args, ID } from '@nestjs/graphql';
 import { BranchesService } from './branches.service';
 import { Branch } from './entities/branch.entity';
 import { CreateBranchInput } from './dto/create-branch.input';
 import { UpdateBranchInput } from './dto/update-branch.input';
+import { UseGuards } from '@nestjs/common';
 
+@UseGuards(GqlAuthGuard)
 @Resolver(() => Branch)
 export class BranchesResolver {
   constructor(private readonly branchesService: BranchesService) {}

@@ -49,7 +49,9 @@ export class Branch {
   @Column('jsonb', { nullable: true })
   protectionRules: BranchProtectionRules;
 
-  @ManyToOne(() => Repo, (repo) => repo.branches)
+  @ManyToOne(() => Repo, (repo) => repo.branches, {
+    onDelete: 'CASCADE',
+  })
   @Field(() => Repo)
   repository: Repo;
 

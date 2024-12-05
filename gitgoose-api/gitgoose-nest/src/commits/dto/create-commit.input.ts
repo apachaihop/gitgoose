@@ -5,6 +5,7 @@ import {
   IsUUID,
   IsArray,
   ValidateNested,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -38,7 +39,8 @@ export class CreateCommitInput {
   @IsString()
   branch: string;
 
-  @Field(() => ID)
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
   @IsUUID()
   authorId: string;
 

@@ -5,6 +5,8 @@ import { CreatePullRequestInput } from './dto/create-pull_request.input';
 import { UpdatePullRequestInput } from './dto/update-pull_request.input';
 import { GitClientService } from '../git-client/git-client.service';
 import { Repository } from 'typeorm';
+import { ActivitiesService } from '../activities/activities.service';
+import { ActivityType } from '../activities/enums/activity-type.enum';
 
 @Injectable()
 export class PullRequestsService {
@@ -12,6 +14,7 @@ export class PullRequestsService {
     @InjectRepository(PullRequest)
     private pullRequestRepository: Repository<PullRequest>,
     private gitClientService: GitClientService,
+    private activitiesService: ActivitiesService,
   ) {}
 
   async create(
@@ -43,7 +46,7 @@ export class PullRequestsService {
   async findOne(id: string): Promise<PullRequest> {
     const pullRequest = await this.pullRequestRepository.findOne({
       where: { id },
-      relations: ['author', 'repository', 'reviewers'],
+      relations: ['author', 'repository', 'reviewers', 'comments'],
     });
 
     if (!pullRequest) {
@@ -81,25 +84,17 @@ export class PullRequestsService {
     }
 
     try {
-      // Fetch latest changes from both branches
-      await this.gitClientService.pull({
-        repoId: pullRequest.repositoryId,
-        branch: pullRequest.targetBranch,
-      });
-
-      await this.gitClientService.pull({
-        repoId: pullRequest.repositoryId,
-        branch: pullRequest.sourceBranch,
-      });
-
-      // Try to merge source into target
+      // Use merge operation directly instead of branch operation
       try {
-        await this.gitClientService.handleBranchOperation({
+        await this.gitClientService.merge({
           repoId: pullRequest.repositoryId,
-          operation: 'merge',
-          branch: pullRequest.targetBranch,
           sourceBranch: pullRequest.sourceBranch,
           targetBranch: pullRequest.targetBranch,
+          message: `Merge pull request #${pullRequest.number} from ${pullRequest.sourceBranch}`,
+          author: {
+            name: 'System',
+            email: 'system@gitgoose.com',
+          },
         });
       } catch (error) {
         if (error.message.includes('CONFLICTS')) {
@@ -112,28 +107,19 @@ export class PullRequestsService {
         throw error;
       }
 
-      // Create merge commit
-      await this.gitClientService.createCommit({
-        repoId: pullRequest.repositoryId,
-        message: `Merge pull request #${pullRequest.number} from ${pullRequest.sourceBranch}`,
-        branch: pullRequest.targetBranch,
-        authorId: userId,
-        authorName: 'System',
-        authorEmail: 'system@gitgoose.com',
-        files: [], // Files are already staged by the merge operation
-      });
-
-      // Push changes
-      await this.gitClientService.push({
-        repoId: pullRequest.repositoryId,
-        branch: pullRequest.targetBranch,
-      });
-
       // Update PR status
       pullRequest.isMerged = true;
       pullRequest.mergedAt = new Date();
       pullRequest.mergedById = userId;
       pullRequest.state = 'closed';
+
+      // Record activity
+      await this.activitiesService.createActivity({
+        userId,
+        type: ActivityType.PR_MERGE,
+        description: `Merged pull request #${pullRequest.number} into ${pullRequest.targetBranch}`,
+        repositoryId: pullRequest.repositoryId,
+      });
 
       return await this.pullRequestRepository.save(pullRequest);
     } catch (error) {
@@ -161,5 +147,21 @@ export class PullRequestsService {
       (reviewer) => reviewer.id !== reviewerId,
     );
     return await this.pullRequestRepository.save(pullRequest);
+  }
+
+  async findByAuthor(authorId: string): Promise<PullRequest[]> {
+    return await this.pullRequestRepository.find({
+      where: { authorId },
+      relations: ['repository'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findByReviewer(reviewerId: string): Promise<PullRequest[]> {
+    return await this.pullRequestRepository.find({
+      where: { reviewers: { id: reviewerId } },
+      relations: ['repository', 'author'],
+      order: { createdAt: 'DESC' },
+    });
   }
 }

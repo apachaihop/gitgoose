@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsUUID, IsEnum } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsUUID,
+  IsEnum,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { FileOperation } from './file-operation.enum';
 
 export class FileOperationDto {
@@ -10,9 +16,15 @@ export class FileOperationDto {
   @IsEnum(FileOperation)
   operation: FileOperation;
 
+  @IsOptional()
+  @IsString()
   path?: string;
 
+  @IsOptional()
+  @IsString()
   content?: string;
 
+  @IsOptional()
+  @IsString()
   branch?: string;
 }

@@ -71,4 +71,8 @@ export class Issue {
   @Field()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  closedAt: Date;
 }

@@ -6,6 +6,8 @@ import { CreateUserInput } from '../dto/create-user.input';
 import { LoginInput } from '../dto/login.input';
 import { LoginResponse } from '../dto/login-response';
 import { GqlAuthGuard } from './gql_auth.guard';
+import { UpdateUserProfileInput } from '../dto/update-user-profile.input';
+import { CurrentUser } from '../decorators/current-user.decorator';
 
 @Resolver(() => User)
 export class AuthResolver {
@@ -25,5 +27,19 @@ export class AuthResolver {
   @UseGuards(GqlAuthGuard)
   me(@Context() context) {
     return context.req.user;
+  }
+
+  @Query(() => User, { nullable: true })
+  async userByUsername(@Args('username') username: string) {
+    return this.authService.findByUsername(username);
+  }
+
+  @Mutation(() => User)
+  @UseGuards(GqlAuthGuard)
+  async updateUserProfile(
+    @Args('input') input: UpdateUserProfileInput,
+    @CurrentUser() user: User,
+  ) {
+    return this.authService.updateProfile(user.id, input);
   }
 }

@@ -143,6 +143,9 @@ export class User {
   @OneToMany(() => Branch, (branch) => branch.lastCommitAuthor)
   branchCommits: Branch[];
 
+  @Field(() => Boolean)
+  isFollowedByViewer: boolean;
+
   async addFollower(user: User) {
     if (this.followers === undefined) {
       this.followers = [];

@@ -1,0 +1,925 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Comment {
+  id: ID!
+  body: String!
+  authorId: ID!
+  author: User!
+  pullRequestId: ID!
+  pullRequest: PullRequest!
+  path: String
+  lineNumber: Float
+  isResolved: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"""
+`Date` type as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
+"""
+scalar Timestamp
+
+type PullRequest {
+  id: ID!
+  number: Float!
+  title: String!
+  body: String
+  state: String!
+  sourceBranch: String!
+  targetBranch: String!
+  isDraft: Boolean!
+  isMerged: Boolean!
+  hasConflicts: Boolean!
+  mergedAt: Timestamp
+  mergedById: String
+  mergedBy: User
+  authorId: ID!
+  author: User!
+  repositoryId: ID!
+  repository: Repo!
+  reviewers: [User!]!
+  comments: [Comment!]!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Issue {
+  id: ID!
+  title: String!
+  body: String!
+  number: Float!
+  state: String!
+  author: User!
+  authorId: String!
+  repository: Repo!
+  repositoryId: String!
+  assignees: [User!]!
+  labels: [String!]!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type BranchProtectionRules {
+  requirePullRequest: Boolean!
+  requiredReviewers: Float!
+  requireStatusChecks: Boolean!
+}
+
+type Branch {
+  id: ID!
+  name: String!
+  lastCommitSha: String
+  lastCommitMessage: String
+  lastCommitAuthorId: String
+  protectionRules: BranchProtectionRules
+  repository: Repo!
+  lastCommitAuthor: User
+  repositoryId: String!
+  isProtected: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Repo {
+  id: ID!
+  name: String!
+  description: String
+  isPrivate: Boolean!
+  defaultBranch: String!
+  ownerId: String!
+  owner: User!
+  path: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  starsCount: Float!
+  forksCount: Float!
+  isFork: Boolean!
+  forkedFromId: String
+  forkedFrom: Repo
+  pullRequests: [PullRequest!]!
+  issues: [Issue!]!
+  branches: [Branch!]!
+}
+
+type User {
+  id: ID!
+  email: String!
+  username: String!
+  name: String
+  bio: String
+  location: String
+  website: String
+  avatarUrl: String
+  repositories: [Repo!]!
+  starredRepositories: [Repo!]!
+  followers: [User!]!
+  following: [User!]!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  isAdmin: Boolean!
+  isActive: Boolean!
+  roles: [String!]!
+  googleId: String
+  githubId: String
+  emailNotificationsEnabled: Boolean!
+  preferences: JSON
+  publicReposCount: Float!
+  privateReposCount: Float!
+  followersCount: Float!
+  followingCount: Float!
+  assignedIssues: [Issue!]!
+  branchCommits: [Branch!]!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type LoginResponse {
+  access_token: String!
+  user: User!
+}
+
+type Commit {
+  id: ID!
+  sha: String!
+  message: String!
+  authorName: String!
+  authorEmail: String!
+  authorId: ID!
+  author: User!
+  repositoryId: ID!
+  repository: Repo!
+  createdAt: Timestamp!
+  parentShas: [String!]!
+  isMergeCommit: Boolean!
+}
+
+type CommitAuthor {
+  name: String!
+  email: String
+}
+
+type CommitResult {
+  sha: String!
+  message: String!
+  author: CommitAuthor!
+  timestamp: Float!
+}
+
+type FileTreeItem {
+  path: String!
+  type: String!
+  content: String
+  size: Float
+  children: [FileTreeItem!]
+}
+
+type Query {
+  me: User!
+  repos: [Repo!]!
+  repo(id: String!): Repo!
+  getCloneUrl(id: ID!): String!
+  reposByOwner(ownerId: ID!): [Repo!]!
+  checkPermission(repoId: ID!, userId: ID!, permission: String!): Boolean!
+  getRepositoryFiles(
+    repositoryId: String!
+    ref: String
+    path: String
+  ): [FileTreeItem!]!
+  getFileDetails(
+    repositoryId: String!
+    path: String!
+    ref: String
+  ): FileTreeItem!
+  pullRequests: [PullRequest!]!
+  pullRequest(id: ID!): PullRequest!
+  pullRequestsByRepository(repositoryId: ID!): [PullRequest!]!
+  pullRequestsByAuthor(authorId: ID!): [PullRequest!]!
+  pullRequestsByReviewer(reviewerId: ID!): [PullRequest!]!
+  issues: [Issue!]!
+  issue(id: ID!): Issue!
+  issuesByAuthor(authorId: ID!): [Issue!]!
+  issuesByRepository(repositoryId: ID!): [Issue!]!
+  branches: [Branch!]!
+  branch(id: ID!): Branch!
+  branchesByRepository(repositoryId: ID!): [Branch!]!
+  commits: [Commit!]!
+  commit(id: ID!): Commit!
+  commitsByRepository(repositoryId: ID!): [Commit!]!
+  commitBySha(repositoryId: ID!, sha: String!): Commit!
+  commitsByAuthor(authorId: ID!): [Commit!]!
+  commitsByBranch(repositoryId: ID!, branchName: String!): [Commit!]!
+  latestCommit(repositoryId: ID!, branchName: String): Commit!
+  commentsByPullRequest(pullRequestId: ID!): [Comment!]!
+  commentsByAuthor(authorId: ID!): [Comment!]!
+  commentsByPath(pullRequestId: ID!, path: String!): [Comment!]!
+}
+
+type Mutation {
+  register(createUserInput: CreateUserInput!): User!
+  login(loginInput: LoginInput!): LoginResponse!
+  createRepo(createRepoInput: CreateRepoInput!): Repo!
+  updateRepo(updateRepoInput: UpdateRepoInput!): Repo!
+  removeRepo(id: String!): Repo!
+  cloneRepository(input: CloneRepositoryInput!): Repo!
+  setVisibility(id: ID!, isPrivate: Boolean!): Repo!
+  setDefaultBranch(id: ID!, branchName: String!): Repo!
+  uploadFiles(input: UploadFilesInput!): CommitResult!
+  createPullRequest(
+    createPullRequestInput: CreatePullRequestInput!
+  ): PullRequest!
+  updatePullRequest(
+    updatePullRequestInput: UpdatePullRequestInput!
+  ): PullRequest!
+  mergePullRequest(id: ID!): PullRequest!
+  removePullRequest(id: ID!): PullRequest!
+  addReviewer(pullRequestId: ID!, reviewerId: ID!): PullRequest!
+  removeReviewer(pullRequestId: ID!, reviewerId: ID!): PullRequest!
+  createIssue(createIssueInput: CreateIssueInput!): Issue!
+  updateIssue(updateIssueInput: UpdateIssueInput!): Issue!
+  removeIssue(id: ID!): Issue!
+  addLabel(id: ID!, label: String!): Issue!
+  removeLabel(id: ID!, label: String!): Issue!
+  assignIssue(issueId: ID!, assigneeId: ID!): Issue!
+  unassignIssue(issueId: ID!, assigneeId: ID!): Issue!
+  changeIssueState(issueId: ID!, state: String!): Issue!
+  createBranch(createBranchInput: CreateBranchInput!): Branch!
+  updateBranch(updateBranchInput: UpdateBranchInput!): Branch!
+  removeBranch(id: ID!): Branch!
+  setProtected(id: ID!, isProtected: Boolean!): Branch!
+  updateLastCommit(
+    id: ID!
+    sha: String!
+    message: String!
+    authorId: ID!
+  ): Branch!
+  createCommit(createCommitInput: CreateCommitInput!): Commit!
+  createComment(createCommentInput: CreateCommentInput!): Comment!
+  resolveComment(id: ID!): Comment!
+  removeComment(id: ID!): Comment!
+  updateComment(id: ID!, body: String!): Comment!
+}
+
+input CreateUserInput {
+  email: String!
+  username: String!
+  password: String!
+  name: String
+  bio: String
+  location: String
+  website: String
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+input CreateRepoInput {
+  name: String!
+  description: String
+  isPrivate: Boolean! = false
+  defaultBranch: String! = "main"
+  ownerId: String
+}
+
+input UpdateRepoInput {
+  name: String
+  description: String
+  isPrivate: Boolean = false
+  defaultBranch: String = "main"
+  ownerId: String
+  id: String!
+}
+
+input CloneRepositoryInput {
+  url: String!
+  name: String!
+  description: String
+  isPrivate: Boolean! = false
+  auth: AuthInput
+}
+
+input AuthInput {
+  username: String!
+  password: String!
+}
+
+input UploadFilesInput {
+  repositoryId: String!
+  branch: String!
+  commitMessage: String!
+  files: [FileChangeInput!]!
+}
+
+input FileChangeInput {
+  path: String!
+  content: String!
+  operation: String!
+}
+
+input CreatePullRequestInput {
+  title: String!
+  body: String!
+  repositoryId: String!
+  authorId: String
+  sourceBranch: String!
+  targetBranch: String!
+  isDraft: Boolean
+}
+
+input UpdatePullRequestInput {
+  title: String
+  body: String
+  repositoryId: String
+  authorId: String
+  sourceBranch: String
+  targetBranch: String
+  isDraft: Boolean
+  id: ID!
+  state: String
+}
+
+input CreateIssueInput {
+  title: String!
+  body: String!
+  repositoryId: String!
+  authorId: String
+}
+
+input UpdateIssueInput {
+  title: String
+  body: String
+  repositoryId: String
+  authorId: String
+  id: ID!
+  state: String
+}
+
+input CreateBranchInput {
+  name: String!
+  repositoryId: String!
+  lastCommitSha: String!
+  lastCommitMessage: String!
+  lastCommitAuthorId: String!
+}
+
+input UpdateBranchInput {
+  name: String
+  repositoryId: String
+  lastCommitSha: String
+  lastCommitMessage: String
+  lastCommitAuthorId: String
+  id: ID!
+  isProtected: Boolean
+}
+
+input CreateCommitInput {
+  repositoryId: ID!
+  message: String!
+  branch: String!
+  authorId: ID
+  authorName: String!
+  authorEmail: String!
+  files: [FileInput!]!
+}
+
+input FileInput {
+  path: String!
+  content: String!
+  operation: String!
+}
+
+input CreateCommentInput {
+  body: String!
+  pullRequestId: ID!
+  authorId: ID
+  path: String
+  lineNumber: Float
+}
+
+# Auth Operations
+mutation Register {
+  register(
+    createUserInput: {
+      email: "test@example.com"
+      username: "testuser"
+      password: "password123"
+      name: "Test User"
+      bio: "Test bio"
+      location: "Test Location"
+      website: "https://test.com"
+    }
+  ) {
+    id
+    email
+    username
+    name
+  }
+}
+
+mutation Login {
+  login(loginInput: { email: "test@example.com", password: "password123" }) {
+    access_token
+    user {
+      id
+      email
+      username
+    }
+  }
+}
+
+query Me {
+  me {
+    id
+    email
+    username
+    name
+  }
+}
+
+# Repository Operations
+mutation CreateRepo {
+  createRepo(
+    createRepoInput: {
+      name: "test-project"
+      description: "A test repository"
+      isPrivate: false
+      defaultBranch: "main"
+    }
+  ) {
+    id
+    name
+    description
+    defaultBranch
+  }
+}
+
+mutation UpdateRepo {
+  updateRepo(
+    updateRepoInput: {
+      id: "REPO_ID"
+      name: "updated-project"
+      description: "Updated description"
+    }
+  ) {
+    id
+    name
+    description
+  }
+}
+
+mutation RemoveRepo {
+  removeRepo(id: "REPO_ID") {
+    id
+    name
+  }
+}
+
+mutation SetRepoVisibility {
+  setVisibility(id: "REPO_ID", isPrivate: true) {
+    id
+    isPrivate
+  }
+}
+
+mutation SetDefaultBranch {
+  setDefaultBranch(id: "REPO_ID", branchName: "develop") {
+    id
+    defaultBranch
+  }
+}
+
+mutation CloneRepository {
+  cloneRepository(
+    input: {
+      url: "https://github.com/user/repo.git"
+      name: "cloned-repo"
+      description: "Cloned repository"
+      isPrivate: false
+    }
+  ) {
+    id
+    name
+    cloneUrl
+  }
+}
+
+# File Operations
+query GetRepositoryFiles {
+  getRepositoryFiles(repositoryId: "REPO_ID", ref: "main", path: "src") {
+    path
+    type
+    content
+    size
+    children {
+      path
+      type
+    }
+  }
+}
+
+query GetFileDetails {
+  getFileDetails(repositoryId: "REPO_ID", path: "README.md", ref: "main") {
+    path
+    type
+    content
+    size
+  }
+}
+
+mutation UploadFiles {
+  uploadFiles(
+    input: {
+      repositoryId: "REPO_ID"
+      branch: "main"
+      commitMessage: "Add new files"
+      files: [
+        {
+          path: "src/index.js"
+          content: "console.log('Hello World');"
+          operation: "add"
+        }
+      ]
+    }
+  ) {
+    sha
+    message
+    author {
+      name
+      email
+    }
+    timestamp
+  }
+}
+
+# Branch Operations
+mutation CreateBranch {
+  createBranch(
+    createBranchInput: {
+      name: "feature"
+      repositoryId: "REPO_ID"
+      lastCommitSha: "COMMIT_SHA"
+      lastCommitMessage: "Initial commit"
+      lastCommitAuthorId: "USER_ID"
+    }
+  ) {
+    id
+    name
+  }
+}
+
+mutation UpdateBranch {
+  updateBranch(
+    updateBranchInput: { id: "BRANCH_ID", name: "feature-updated" }
+  ) {
+    id
+    name
+  }
+}
+
+mutation RemoveBranch {
+  removeBranch(id: "BRANCH_ID") {
+    id
+    name
+  }
+}
+
+mutation SetBranchProtection {
+  setProtected(id: "BRANCH_ID", isProtected: true) {
+    id
+    name
+    isProtected
+  }
+}
+
+mutation UpdateLastCommit {
+  updateLastCommit(
+    id: "BRANCH_ID"
+    sha: "NEW_COMMIT_SHA"
+    message: "New commit"
+    authorId: "USER_ID"
+  ) {
+    id
+    lastCommitSha
+    lastCommitMessage
+  }
+}
+
+# Commit Operations
+mutation CreateCommit {
+  createCommit(
+    createCommitInput: {
+      repositoryId: "REPO_ID"
+      message: "Initial commit"
+      branch: "main"
+      authorName: "Test User"
+      authorEmail: "test@example.com"
+      files: [
+        {
+          path: "README.md"
+          content: "# Test Project\nThis is a test repository."
+          operation: "add"
+        }
+      ]
+    }
+  ) {
+    id
+    sha
+    message
+    authorName
+  }
+}
+
+# Comment Operations
+mutation CreateComment {
+  createComment(
+    createCommentInput: {
+      body: "Test comment"
+      pullRequestId: "PR_ID"
+      path: "README.md"
+      lineNumber: 1
+    }
+  ) {
+    id
+    body
+  }
+}
+
+mutation UpdateComment {
+  updateComment(id: "COMMENT_ID", body: "Updated comment") {
+    id
+    body
+  }
+}
+
+mutation ResolveComment {
+  resolveComment(id: "COMMENT_ID") {
+    id
+    isResolved
+  }
+}
+
+mutation RemoveComment {
+  removeComment(id: "COMMENT_ID") {
+    id
+  }
+}
+
+# Issue Operations
+mutation CreateIssue {
+  createIssue(
+    createIssueInput: {
+      title: "Test Issue"
+      body: "Test issue description"
+      repositoryId: "REPO_ID"
+    }
+  ) {
+    id
+    title
+    body
+  }
+}
+
+mutation UpdateIssue {
+  updateIssue(
+    updateIssueInput: {
+      id: "ISSUE_ID"
+      title: "Updated Issue"
+      body: "Updated description"
+    }
+  ) {
+    id
+    title
+    body
+  }
+}
+
+mutation RemoveIssue {
+  removeIssue(id: "ISSUE_ID") {
+    id
+  }
+}
+
+mutation AddLabel {
+  addLabel(id: "ISSUE_ID", label: "bug") {
+    id
+    labels
+  }
+}
+
+mutation RemoveLabel {
+  removeLabel(id: "ISSUE_ID", label: "bug") {
+    id
+    labels
+  }
+}
+
+mutation AssignIssue {
+  assignIssue(issueId: "ISSUE_ID", assigneeId: "USER_ID") {
+    id
+    assignees {
+      id
+      username
+    }
+  }
+}
+
+mutation UnassignIssue {
+  unassignIssue(issueId: "ISSUE_ID", assigneeId: "USER_ID") {
+    id
+    assignees {
+      id
+      username
+    }
+  }
+}
+
+mutation ChangeIssueState {
+  changeIssueState(issueId: "ISSUE_ID", state: "closed") {
+    id
+    state
+  }
+}
+
+# Queries
+query GetRepository {
+  repo(id: "REPO_ID") {
+    id
+    name
+    description
+    defaultBranch
+    isPrivate
+    owner {
+      id
+      username
+    }
+  }
+}
+
+query GetAllRepos {
+  repos {
+    id
+    name
+    description
+  }
+}
+
+query GetReposByOwner {
+  reposByOwner(ownerId: "USER_ID") {
+    id
+    name
+    description
+  }
+}
+
+query GetBranches {
+  branches {
+    id
+    name
+    isProtected
+  }
+}
+
+query GetBranch {
+  branch(id: "BRANCH_ID") {
+    id
+    name
+    isProtected
+    lastCommitSha
+  }
+}
+
+query GetBranchesByRepository {
+  branchesByRepository(repositoryId: "REPO_ID") {
+    id
+    name
+    isProtected
+    lastCommitSha
+  }
+}
+
+query GetCommits {
+  commits {
+    id
+    sha
+    message
+    authorName
+  }
+}
+
+query GetCommit {
+  commit(id: "COMMIT_ID") {
+    id
+    sha
+    message
+    authorName
+  }
+}
+
+query GetCommitsByRepository {
+  commitsByRepository(repositoryId: "REPO_ID") {
+    id
+    sha
+    message
+    authorName
+  }
+}
+
+query GetCommitBySha {
+  commitBySha(repositoryId: "REPO_ID", sha: "COMMIT_SHA") {
+    id
+    sha
+    message
+  }
+}
+
+query GetCommitsByAuthor {
+  commitsByAuthor(authorId: "USER_ID") {
+    id
+    sha
+    message
+  }
+}
+
+query GetCommitsByBranch {
+  commitsByBranch(repositoryId: "REPO_ID", branchName: "main") {
+    id
+    sha
+    message
+  }
+}
+
+query GetLatestCommit {
+  latestCommit(repositoryId: "REPO_ID", branchName: "main") {
+    id
+    sha
+    message
+  }
+}
+
+query GetCommentsByPullRequest {
+  commentsByPullRequest(pullRequestId: "PR_ID") {
+    id
+    body
+    isResolved
+  }
+}
+
+query GetCommentsByAuthor {
+  commentsByAuthor(authorId: "USER_ID") {
+    id
+    body
+    isResolved
+  }
+}
+
+query GetCommentsByPath {
+  commentsByPath(pullRequestId: "PR_ID", path: "README.md") {
+    id
+    body
+    path
+  }
+}
+
+query GetIssues {
+  issues {
+    id
+    title
+    state
+  }
+}
+
+query GetIssue {
+  issue(id: "ISSUE_ID") {
+    id
+    title
+    body
+    state
+    labels
+  }
+}
+
+query GetIssuesByAuthor {
+  issuesByAuthor(authorId: "USER_ID") {
+    id
+    title
+    state
+  }
+}
+
+query GetIssuesByRepository {
+  issuesByRepository(repositoryId: "REPO_ID") {
+    id
+    title
+    state
+  }
+}
+
+query CheckPermission {
+  checkPermission(repoId: "REPO_ID", userId: "USER_ID", permission: "write")
+}

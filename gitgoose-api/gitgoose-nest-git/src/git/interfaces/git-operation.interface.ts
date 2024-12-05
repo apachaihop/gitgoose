@@ -11,6 +11,7 @@ export interface CommitInfo {
     name: string;
     email: string;
   };
+  parentShas: string[];
   timestamp: number;
 }
 
@@ -28,4 +29,13 @@ export interface FileInfo {
 export interface FileOperationResult {
   content?: string;
   files?: FileInfo[];
+}
+
+export interface PackFileResult {
+  packfile: Buffer;
+}
+
+export interface PackFileRequest {
+  repoId: string;
+  wants?: string[];
 }

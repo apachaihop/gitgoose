@@ -10,6 +10,21 @@ export interface FileUpload {
 }
 
 @InputType()
+export class FileChangeInput {
+  @Field()
+  @IsString()
+  path: string;
+
+  @Field()
+  @IsString()
+  content: string;
+
+  @Field()
+  @IsString()
+  operation: 'add' | 'modify' | 'delete';
+}
+
+@InputType()
 export class UploadFilesInput {
   @Field()
   @IsNotEmpty()
@@ -26,6 +41,6 @@ export class UploadFilesInput {
   @IsString()
   commitMessage: string;
 
-  @Field(() => [String])
-  files: Promise<FileUpload>[];
+  @Field(() => [FileChangeInput])
+  files: FileChangeInput[];
 }

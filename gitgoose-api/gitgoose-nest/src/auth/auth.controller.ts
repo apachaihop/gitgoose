@@ -6,6 +6,8 @@ import {
   Get,
   Request,
   Req,
+  Query,
+  Redirect,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -31,8 +33,16 @@ export class AuthController {
 
   @Get('google/redirect')
   @UseGuards(GoogleOAuthGuard)
-  googleAuthRedirect(@Req() req) {
-    return this.authService.validateOAuthLogin(req.user);
+  @Redirect()
+  async googleAuthRedirect(@Req() req, @Query('code') code: string) {
+    const result = await this.authService.validateOAuthLogin(req.user);
+    if (result.user.isActive) {
+      return {
+        url: `${process.env.FRONTEND_URL}/auth/google/redirect?token=${result.access_token}`,
+        statusCode: 302,
+      };
+    }
+    return { error: 'User is not active' };
   }
   @UseGuards(JwtAuthGuard)
   @Get('profile')

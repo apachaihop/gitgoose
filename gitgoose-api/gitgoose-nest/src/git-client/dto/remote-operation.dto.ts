@@ -7,4 +7,6 @@ export class RemoteOperationDto {
     username: string;
     password: string;
   };
+  authorName?: string;
+  authorEmail?: string;
 }

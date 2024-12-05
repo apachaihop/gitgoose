@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -21,6 +21,17 @@ import { GraphQLJSONObject } from 'graphql-type-json';
 import { CommentsModule } from './comments/comments.module';
 import { GitClientModule } from './git-client/git-client.module';
 import { join } from 'path';
+import { ActivitiesModule } from './activities/activities.module';
+import { GitModule } from './git/git.module';
+import { RouterModule } from '@nestjs/core';
+import { AdminModule } from './admin/admin.module';
+import { SocialModule } from './social/social.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { MetricsMiddleware } from './metrics/metrics.middleware';
+import {
+  requestCounterProvider,
+  requestDurationProvider,
+} from './metrics/metric.decorators';
 
 @Module({
   imports: [
@@ -62,8 +73,23 @@ import { join } from 'path';
     CommitsModule,
     CommentsModule,
     GitClientModule,
+    ActivitiesModule,
+    GitModule,
+    RouterModule.register([
+      {
+        path: 'git',
+        module: GitModule,
+      },
+    ]),
+    AdminModule,
+    SocialModule,
+    MetricsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, requestCounterProvider, requestDurationProvider],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(MetricsMiddleware).forRoutes('*');
+  }
+}

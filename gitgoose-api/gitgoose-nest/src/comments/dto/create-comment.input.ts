@@ -19,8 +19,8 @@ export class CreateCommentInput {
   @IsUUID()
   pullRequestId: string;
 
-  @Field(() => ID)
-  @IsNotEmpty()
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
   @IsUUID()
   authorId: string;
 

@@ -102,4 +102,8 @@ export class PullRequest {
   @Field()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  closedAt: Date;
 }

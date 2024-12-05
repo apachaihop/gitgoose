@@ -28,8 +28,8 @@ export class CreateRepoInput {
   @IsString()
   defaultBranch: string;
 
-  @Field()
-  @IsNotEmpty()
+  @Field({ nullable: true })
+  @IsOptional()
   @IsUUID()
   ownerId: string;
 }

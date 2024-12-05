@@ -24,8 +24,8 @@ export class CreatePullRequestInput {
   @IsUUID()
   repositoryId: string;
 
-  @Field()
-  @IsNotEmpty()
+  @Field({ nullable: true })
+  @IsOptional()
   @IsUUID()
   authorId: string;
 

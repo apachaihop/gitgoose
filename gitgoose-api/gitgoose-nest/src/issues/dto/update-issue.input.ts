@@ -8,6 +8,9 @@ export class UpdateIssueInput extends PartialType(CreateIssueInput) {
   @IsUUID()
   id: string;
 
+  @Field(() => ID)
+  authorId: string;
+
   @Field({ nullable: true })
   state?: string;
 }

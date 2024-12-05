@@ -4,6 +4,8 @@ import { UseGuards } from '@nestjs/common';
 import { CommitsService } from './commits.service';
 import { Commit } from './entities/commit.entity';
 import { CreateCommitInput } from './dto/create-commit.input';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../auth/entities/user.entity';
 
 @Resolver(() => Commit)
 @UseGuards(GqlAuthGuard)
@@ -13,8 +15,12 @@ export class CommitsResolver {
   @Mutation(() => Commit)
   createCommit(
     @Args('createCommitInput') createCommitInput: CreateCommitInput,
+    @CurrentUser() user: User,
   ) {
-    return this.commitsService.create(createCommitInput);
+    return this.commitsService.create({
+      ...createCommitInput,
+      authorId: user.id,
+    });
   }
 
   @Query(() => [Commit], { name: 'commits' })
@@ -40,5 +46,26 @@ export class CommitsResolver {
     @Args('sha') sha: string,
   ) {
     return this.commitsService.findBySha(repositoryId, sha);
+  }
+
+  @Query(() => [Commit])
+  commitsByAuthor(@Args('authorId', { type: () => ID }) authorId: string) {
+    return this.commitsService.findByAuthor(authorId);
+  }
+
+  @Query(() => [Commit])
+  commitsByBranch(
+    @Args('repositoryId', { type: () => ID }) repositoryId: string,
+    @Args('branchName') branchName: string,
+  ) {
+    return this.commitsService.findByBranch(repositoryId, branchName);
+  }
+
+  @Query(() => Commit)
+  latestCommit(
+    @Args('repositoryId', { type: () => ID }) repositoryId: string,
+    @Args('branchName', { nullable: true }) branchName?: string,
+  ) {
+    return this.commitsService.findLatest(repositoryId, branchName);
   }
 }

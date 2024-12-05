@@ -5,5 +5,5 @@ export interface CommitInfo {
     name: string;
     email: string;
   };
-  timestamp: number;
+  parentShas: string[];
 }

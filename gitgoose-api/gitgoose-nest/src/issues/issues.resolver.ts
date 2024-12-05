@@ -3,14 +3,24 @@ import { IssuesService } from './issues.service';
 import { Issue } from './entities/issue.entity';
 import { CreateIssueInput } from './dto/create-issue.input';
 import { UpdateIssueInput } from './dto/update-issue.input';
-
+import { UseGuards } from '@nestjs/common';
+import { GqlAuthGuard } from '../auth/gql_auth/gql_auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { User } from '../auth/entities/user.entity';
 @Resolver(() => Issue)
+@UseGuards(GqlAuthGuard)
 export class IssuesResolver {
   constructor(private readonly issuesService: IssuesService) {}
 
   @Mutation(() => Issue)
-  createIssue(@Args('createIssueInput') createIssueInput: CreateIssueInput) {
-    return this.issuesService.create(createIssueInput);
+  createIssue(
+    @Args('createIssueInput') createIssueInput: CreateIssueInput,
+    @CurrentUser() user: User,
+  ) {
+    return this.issuesService.create({
+      ...createIssueInput,
+      authorId: user.id,
+    });
   }
 
   @Query(() => [Issue], { name: 'issues' })
@@ -47,5 +57,41 @@ export class IssuesResolver {
     @Args('label', { type: () => String }) label: string,
   ) {
     return this.issuesService.removeLabel(id, label);
+  }
+
+  @Query(() => [Issue])
+  issuesByAuthor(@Args('authorId', { type: () => ID }) authorId: string) {
+    return this.issuesService.findByAuthor(authorId);
+  }
+
+  @Query(() => [Issue])
+  issuesByRepository(
+    @Args('repositoryId', { type: () => ID }) repositoryId: string,
+  ) {
+    return this.issuesService.findByRepository(repositoryId);
+  }
+
+  @Mutation(() => Issue)
+  assignIssue(
+    @Args('issueId', { type: () => ID }) issueId: string,
+    @Args('assigneeId', { type: () => ID }) assigneeId: string,
+  ) {
+    return this.issuesService.assign(issueId, assigneeId);
+  }
+
+  @Mutation(() => Issue)
+  unassignIssue(
+    @Args('issueId', { type: () => ID }) issueId: string,
+    @Args('assigneeId', { type: () => ID }) assigneeId: string,
+  ) {
+    return this.issuesService.unassign(issueId, assigneeId);
+  }
+
+  @Mutation(() => Issue)
+  changeIssueState(
+    @Args('issueId', { type: () => ID }) issueId: string,
+    @Args('state') state: string,
+  ) {
+    return this.issuesService.changeState(issueId, state);
   }
 }

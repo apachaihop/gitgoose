@@ -1,14 +1,9 @@
-import { InputType, Field } from '@nestjs/graphql';
-import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { InputType, Field, ID } from '@nestjs/graphql';
+import { IsNotEmpty, IsString, IsUUID, IsOptional } from 'class-validator';
 
 @InputType()
 export class CreateBranchInput {
-  @Field()
-  @IsNotEmpty()
-  @IsString()
-  name: string;
-
-  @Field()
+  @Field(() => ID)
   @IsNotEmpty()
   @IsUUID()
   repositoryId: string;
@@ -16,15 +11,10 @@ export class CreateBranchInput {
   @Field()
   @IsNotEmpty()
   @IsString()
-  lastCommitSha: string;
+  name: string;
 
-  @Field()
-  @IsNotEmpty()
+  @Field(() => String, { nullable: true, defaultValue: 'main' })
+  @IsOptional()
   @IsString()
-  lastCommitMessage: string;
-
-  @Field()
-  @IsNotEmpty()
-  @IsUUID()
-  lastCommitAuthorId: string;
+  sourceBranch?: string;
 }

@@ -1,17 +1,27 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { User } from '../entities/user.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
-export class AdminGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
+export class AdminGuard extends AuthGuard('jwt') {
+  getRequest(context: ExecutionContext) {
     const ctx = GqlExecutionContext.create(context);
-    const user = ctx.getContext().req.user as User;
+    return ctx.getContext().req;
+  }
 
-    if (!user) {
-      return false;
+  handleRequest(err: any, user: any) {
+    if (err || !user) {
+      throw err || new UnauthorizedException('Invalid or expired token');
     }
 
-    return user.isAdmin === true;
+    if (!user.isAdmin) {
+      throw new UnauthorizedException('Admin access required');
+    }
+
+    return user;
   }
 }

@@ -40,12 +40,17 @@ describe('GitService', () => {
   });
 
   describe('initRepo', () => {
-    it('should initialize a new repository', async () => {
+    it('should initialize a new repository with main branch', async () => {
       const repoId = 'test-repo';
       const repoPath = '/path/to/repo';
+      const treeOid = 'test-tree-sha';
+      const commitSha = 'test-commit-sha';
 
       mockStorageService.ensureRepoDirectory.mockResolvedValue(repoPath);
       (git.init as jest.Mock).mockResolvedValue(undefined);
+      (git.writeTree as jest.Mock).mockResolvedValue(treeOid);
+      (git.commit as jest.Mock).mockResolvedValue(commitSha);
+      (git.writeRef as jest.Mock).mockResolvedValue(undefined);
 
       const result = await service.initRepo(repoId);
 
@@ -54,6 +59,39 @@ describe('GitService', () => {
         repoId,
       );
       expect(git.init).toHaveBeenCalledWith({ fs, dir: repoPath });
+      expect(git.writeTree).toHaveBeenCalledWith({
+        fs,
+        dir: repoPath,
+        tree: [],
+      });
+      expect(git.commit).toHaveBeenCalledWith({
+        fs,
+        dir: repoPath,
+        message: 'Initial commit',
+        author: {
+          name: 'System',
+          email: 'system@gitgoose.com',
+        },
+        tree: treeOid,
+      });
+      expect(git.writeRef).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fs,
+          dir: repoPath,
+          ref: 'refs/heads/main',
+          value: commitSha,
+        }),
+      );
+      expect(git.writeRef).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fs,
+          dir: repoPath,
+          ref: 'HEAD',
+          value: 'ref: refs/heads/main',
+          force: true,
+          symbolic: true,
+        }),
+      );
     });
 
     it('should throw error when initialization fails', async () => {
@@ -82,6 +120,7 @@ describe('GitService', () => {
       const commitSha = 'test-sha';
 
       mockStorageService.getRepoPath.mockResolvedValue(repoPath);
+      (git.listBranches as jest.Mock).mockResolvedValue(['main']);
       (git.checkout as jest.Mock).mockResolvedValue(undefined);
       (git.add as jest.Mock).mockResolvedValue(undefined);
       (git.commit as jest.Mock).mockResolvedValue(commitSha);
@@ -245,35 +284,30 @@ describe('GitService', () => {
     it('should return list of branches', async () => {
       const repoId = 'test-repo';
       const repoPath = '/path/to/repo';
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const mockBranches = [
-        { ref: 'refs/heads/main', name: 'main' },
-        { ref: 'refs/heads/develop', name: 'develop' },
-      ];
 
       mockStorageService.getRepoPath.mockResolvedValue(repoPath);
       (git.listBranches as jest.Mock).mockResolvedValue(['main', 'develop']);
-      (git.resolveRef as jest.Mock).mockImplementation(async ({ ref }) => {
-        return ref === 'main' ? 'sha1' : 'sha2';
-      });
+      (git.currentBranch as jest.Mock).mockResolvedValue('main');
+      (git.resolveRef as jest.Mock)
+        .mockResolvedValueOnce('sha1')
+        .mockResolvedValueOnce('sha2');
 
       const result = await service.getBranches(repoId);
 
       expect(result).toEqual([
-        { name: 'main', sha: 'sha1' },
-        { name: 'develop', sha: 'sha2' },
+        { name: 'main', sha: 'sha1', isHead: true },
+        { name: 'develop', sha: 'sha2', isHead: false },
       ]);
-      expect(git.listBranches).toHaveBeenCalledWith({ fs, dir: repoPath });
     });
 
     it('should handle errors when getting branches', async () => {
       const repoId = 'test-repo';
       mockStorageService.getRepoPath.mockRejectedValue(
-        new Error('Repository not found'),
+        new Error('Failed to get branches: Repository not found'),
       );
 
       await expect(service.getBranches(repoId)).rejects.toThrow(
-        'Failed to get branches',
+        'Failed to get branches: Repository not found',
       );
     });
   });
@@ -288,6 +322,7 @@ describe('GitService', () => {
       const repoPath = '/path/to/repo';
 
       mockStorageService.getRepoPath.mockResolvedValue(repoPath);
+      (git.resolveRef as jest.Mock).mockResolvedValue('sha1');
       (git.branch as jest.Mock).mockResolvedValue(undefined);
 
       await service.createBranch(dto);
@@ -297,6 +332,7 @@ describe('GitService', () => {
         dir: repoPath,
         ref: dto.name,
         checkout: true,
+        object: 'sha1',
       });
     });
 
@@ -359,7 +395,7 @@ describe('GitService', () => {
             name: commit.commit.author.name,
             email: commit.commit.author.email,
           },
-          timestamp: commit.commit.author.timestamp,
+          timestamp: commit.commit.author.timestamp * 1000,
         })),
       );
     });
@@ -367,11 +403,11 @@ describe('GitService', () => {
     it('should handle errors when getting commit history', async () => {
       const repoId = 'test-repo';
       mockStorageService.getRepoPath.mockRejectedValue(
-        new Error('Repository not found'),
+        new Error('Failed to get commit history: Repository not found'),
       );
 
       await expect(service.getCommitHistory(repoId)).rejects.toThrow(
-        'Failed to get commit history',
+        'Failed to get commit history: Repository not found',
       );
     });
   });
@@ -457,7 +493,7 @@ describe('GitService', () => {
       };
 
       mockStorageService.getRepoPath.mockRejectedValue(
-        new Error('Repository not found'),
+        new Error('Failed to merge branches: Repository not found'),
       );
 
       await expect(service.merge(dto)).rejects.toThrow(
@@ -569,7 +605,7 @@ describe('GitService', () => {
       };
 
       mockStorageService.ensureRepoDirectory.mockRejectedValue(
-        new Error('Permission denied'),
+        new Error('Failed to clone repository: Permission denied'),
       );
 
       await expect(service.cloneRepo(dto)).rejects.toThrow(
